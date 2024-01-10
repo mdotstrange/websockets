@@ -8,7 +8,10 @@ wss.on('connection', function connection(ws)
   ws.on('message', function message(data) 
   {
     console.log('received: %s', data);
-  //  ReceivedMessage(data, ws);
+  
+    ReceivedMessage(data,ws)
+
+
   });
 
   ws.send('ConnectedToSocketServer');
@@ -18,6 +21,7 @@ wss.on('connection', function connection(ws)
 function ReceivedMessage(msg,ws)
 {
 
+  /*
   let firstThreeChars = msg.substring(0, 3);
 
   if(firstThreeChars == "God")
@@ -30,15 +34,5 @@ function ReceivedMessage(msg,ws)
     {
       ws.send(msg);
     }
-
-  }
-
-if(msg == "hello")
-{
-console.log("HELLO RECEIVED")
-}
-else
-{
-
-}
+    */
 }
