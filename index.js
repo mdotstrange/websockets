@@ -1,5 +1,4 @@
 import { WebSocketServer } from 'ws';
-import si, { cpu } from "systeminformation";
 
 //process.env.PORT || 3000
 const wss = new WebSocketServer({ port: process.env.PORT || 3000 });
@@ -9,7 +8,7 @@ wss.on('connection', function connection(ws)
   ws.on('message', function message(data) 
   {
     console.log('received: %s', data);
-    ReceivedMessage(data, ws);
+  //  ReceivedMessage(data, ws);
   });
 
   ws.send('ConnectedToSocketServer');
