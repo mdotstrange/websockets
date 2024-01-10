@@ -11,7 +11,6 @@ wss.on('connection', function connection(ws)
   
     ReceivedMessage(data,ws)
 
-
   });
 
   ws.send('ConnectedToSocketServer');
