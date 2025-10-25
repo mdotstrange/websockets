@@ -53,7 +53,7 @@
     if(!res.ok) throw new Error(`GitHub API ${res.status}`);
     const items = (await res.json())
       .filter(x => x.type === 'file' && isImage(x.name))
-      .sort((a,b)=> a.name.localeCompare(b.name, undefined, {numeric:true, sensitivity:'base'}));
+      .sort((a,b)=> b.name.localeCompare(a.name, undefined, {numeric:true, sensitivity:'base'}));
 
     if(items.length === 0){ grid.innerHTML = '<p style="opacity:.7">No images found.</p>'; return; }
 
