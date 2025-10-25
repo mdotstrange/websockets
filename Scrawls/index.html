@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gallery</title>
+<style>
+  :root { --g: 24px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#fff; color:#111; }
+  header { padding: calc(var(--g) * 0.75) var(--g); font-size: 14px; opacity:.6; }
+  .grid {
+    display: grid;
+    gap: var(--g);
+    padding: var(--g);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .tile { aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; border-radius: 6px; background:#f3f3f3; }
+  .tile img {
+    width: 100%; height: 100%; object-fit: cover; display:block; transition: transform .2s ease-out;
+  }
+  .tile:hover img { transform: scale(1.02); }
+
+  /* Viewer */
+  #viewer[hidden] { display:none; }
+  #viewer {
+    position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+    display: grid; grid-template-rows: 1fr auto; z-index: 9999; cursor: zoom-out;
+  }
+  #viewerFigure { margin: 0; align-self: center; justify-self: center; max-width: 92vw; }
+  #viewerImg { max-width: 92vw; max-height: 82vh; width: auto; height: auto; display:block; margin: 0 auto; }
+  #caption {
+    text-align: center; padding: 12px 18px 22px; font-size: 13px; color:#444; word-break: break-all;
+  }
+
+  /* Minimal scrollbar friendliness */
+  @media (prefers-color-scheme: dark) {
+    body { background:#111; color:#e6e6e6; }
+    .tile { background:#1b1b1b; }
+    #viewer { background: rgba(0,0,0,0.96); }
+    #caption { color:#cfcfcf; }
+  }
+</style>
+</head>
+<body>
+  <header>Click any image to view. Click again to return.</header>
+  <main class="grid" id="grid" aria-live="polite"></main>
+
+  <figure id="viewer" aria-modal="true" role="dialog">
+    <div id="viewerFigure">
+      <img id="viewerImg" alt="" />
+      <figcaption id="caption"></figcaption>
+    </div>
+  </figure>
+
+<script>
+(async () => {
+  const grid = document.getElementById('grid');
+  const viewer = document.getElementById('viewer');
+  const viewerImg = document.getElementById('viewerImg');
+  const caption = document.getElementById('caption');
+
+  const exts = ['.jpg','.jpeg','.png','.gif','.webp','.avif'];
+
+  function isImage(name){
+    const n = name.toLowerCase();
+    return exts.some(e => n.endsWith(e));
+  }
+
+  // Fetch the current directory listing (Apache/Nginx autoindex or similar)
+  async function listImagesFromIndex(){
+    const res = await fetch('.', { headers: { 'Accept': 'text/html' }, cache: 'no-store' });
+    const html = await res.text();
+
+    // Pull all hrefs from directory index HTML
+    const hrefs = Array.from(html.matchAll(/href="([^"]+)"/gi), m => decodeURIComponent(m[1]));
+
+    // Keep only files in this folder (no subdirs) that match image extensions
+    const files = hrefs
+      .filter(h => !h.includes('/') && !h.startsWith('?') && !h.startsWith('#'))
+      .filter(isImage);
+
+    // Natural sort
+    return files.sort((a,b)=> a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }));
+  }
+
+  // Render grid
+  function render(files){
+    grid.innerHTML = '';
+    files.forEach(file => {
+      const a = document.createElement('a');
+      a.href = file;
+      a.className = 'tile';
+      a.setAttribute('role','button');
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        openViewer(file);
+      });
+
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.alt = '';
+      img.src = file;
+
+      a.appendChild(img);
+      grid.appendChild(a);
+    });
+  }
+
+  function openViewer(src){
+    viewerImg.src = src;
+    caption.textContent = src;
+    viewer.hidden = false;
+  }
+  function closeViewer(){
+    viewer.hidden = true;
+    viewerImg.src = '';
+    caption.textContent = '';
+  }
+
+  viewer.addEventListener('click', closeViewer);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && !viewer.hidden) closeViewer(); });
+
+  try {
+    const files = await listImagesFromIndex();
+    render(files);
+  } catch (err) {
+    grid.innerHTML = '<p style="opacity:.7">No images found.</p>';
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>
